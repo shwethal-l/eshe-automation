@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>e-SHE Support Portal — Auto-Reply Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f3f3;color:#1a1a1a;font-size:13px}
+.sf-top{background:#0070d2;color:white;padding:10px 20px;display:flex;align-items:center;gap:12px}
+.sf-logo{background:white;color:#0070d2;font-weight:700;font-size:13px;padding:3px 10px;border-radius:4px}
+.sf-title{font-size:15px;font-weight:500}
+.sf-badge{margin-left:auto;background:#22c55e;color:white;font-size:11px;padding:3px 10px;border-radius:10px}
+.tab-bar{background:#1b5ea7;display:flex;padding:0 16px;gap:2px}
+.tab{padding:8px 16px;font-size:12px;color:#b8d4f0;cursor:pointer;border-radius:4px 4px 0 0;user-select:none;border:none;background:none}
+.tab.active{background:white;color:#0070d2;font-weight:600}
+/* pages */
+.page{display:none;height:calc(100vh - 88px)}
+.page.active{display:flex}
+/* CASES PAGE */
+.cases-page{display:flex}
+.col{background:white;border-right:1px solid #e0e0e0;display:flex;flex-direction:column;overflow:hidden}
+.col:last-child{border-right:none}
+.col-head{background:#f8f8f8;border-bottom:1px solid #e0e0e0;padding:9px 14px;font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px;background:#f8f8f8;border-bottom:1px solid #e0e0e0;flex-shrink:0}
+.stat{background:white;border:1px solid #e8e8e8;border-radius:6px;padding:7px;text-align:center}
+.stat-val{font-size:20px;font-weight:600;color:#1a1a1a}
+.stat-lbl{font-size:10px;color:#888;margin-top:1px}
+.queue-tabs{display:flex;border-bottom:1px solid #e0e0e0;flex-shrink:0}
+.qt{flex:1;padding:9px 8px;font-size:12px;text-align:center;cursor:pointer;color:#666;border-right:1px solid #e0e0e0;user-select:none}
+.qt:last-child{border-right:none}
+.qt:hover{background:#f5f5f5}
+.qt.active{color:#0070d2;font-weight:600;background:#e8f4fd;border-bottom:2px solid #0070d2}
+.form-body{flex:1;overflow-y:auto;padding:12px}
+.portal-note{background:#e8f4fd;border:1px solid #b3d4f5;border-radius:6px;padding:9px 11px;font-size:11px;color:#0c5f9e;margin-bottom:12px;line-height:1.5}
+.fg{margin-bottom:10px}
+.fg label{display:block;font-size:11px;color:#555;font-weight:500;margin-bottom:3px}
+.fg input,.fg select,.fg textarea{width:100%;padding:7px 9px;border:1px solid #d0d0d0;border-radius:5px;font-size:12px;color:#1a1a1a;font-family:inherit;background:white}
+.fg textarea{resize:none;height:72px}
+.shell-fields,.general-fields{display:none}
+.shell-fields.show,.general-fields.show{display:block}
+.samples{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.samp{padding:3px 9px;background:#f0f0f0;border:1px solid #d8d8d8;border-radius:4px;font-size:11px;cursor:pointer;color:#333}
+.samp:hover{background:#e0eaf7;border-color:#0070d2;color:#0070d2}
+.btn-submit{width:100%;background:#0070d2;color:white;border:none;padding:10px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
+.btn-submit:hover{background:#005fb0}
+.case-list{flex:1;overflow-y:auto;padding:8px}
+.cc{border:1px solid #e8e8e8;border-radius:8px;padding:10px 12px;margin-bottom:7px;cursor:pointer;background:white}
+.cc:hover{border-color:#aac8f0;background:#f5f9ff}
+.cc.sel{border-color:#0070d2;background:#e8f4fd}
+.cc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.cc-num{font-size:11px;color:#0070d2;font-weight:600}
+.cc-subj{font-size:12px;color:#1a1a1a;line-height:1.35;margin-bottom:4px}
+.cc-meta{font-size:11px;color:#888;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.b-ai{background:#ede9fe;color:#6d28d9}
+.b-sent{background:#dcfce7;color:#166534}
+.b-shell{background:#dcfce7;color:#166534}
+.b-general{background:#fef3c7;color:#92400e}
+.detail-body{flex:1;overflow-y:auto;padding:14px}
+.empty-state{color:#aaa;font-size:13px;text-align:center;padding:60px 20px;line-height:1.6}
+.ai-banner{background:#ede9fe;border:1px solid #c4b5fd;border-radius:7px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#5b21b6;display:flex;justify-content:space-between;align-items:center}
+.d-title{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:11px;line-height:1.4}
+.d-row{display:flex;gap:8px;margin-bottom:6px;font-size:12px}
+.d-lbl{color:#888;min-width:80px;flex-shrink:0}
+.d-val{color:#1a1a1a}
+.tpl-used{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:7px 11px;margin:8px 0;font-size:12px;color:#166534}
+.email-box{border:1px solid #bbf7d0;border-radius:8px;padding:13px;margin-top:10px;background:#f0fdf4}
+.email-hdr{font-size:11px;font-weight:600;color:#166534;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.email-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block}
+.email-field{font-size:11px;color:#166534;margin-bottom:3px}
+.email-field span{font-weight:600}
+.email-body{font-size:12px;color:#1a1a1a;line-height:1.7;margin-top:9px;padding-top:9px;border-top:1px solid #bbf7d0;white-space:pre-wrap}
+/* HISTORY PAGE */
+.history-page{flex-direction:column;background:white;overflow:hidden}
+.history-toolbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #e0e0e0;background:#f8f8f8;flex-shrink:0;flex-wrap:wrap}
+.history-toolbar label{font-size:12px;color:#555;font-weight:500}
+.history-toolbar input[type=date],.history-toolbar select{padding:6px 10px;border:1px solid #d0d0d0;border-radius:5px;font-size:12px;color:#1a1a1a;background:white;font-family:inherit}
+.btn-filter{background:#0070d2;color:white;border:none;padding:7px 16px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:500}
+.btn-filter:hover{background:#005fb0}
+.btn-clear{background:white;color:#666;border:1px solid #d0d0d0;padding:7px 14px;border-radius:5px;font-size:12px;cursor:pointer}
+.btn-clear:hover{background:#f5f5f5}
+.history-summary{display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid #e0e0e0;background:white;flex-shrink:0;flex-wrap:wrap}
+.hs-card{background:#f8f8f8;border:1px solid #e8e8e8;border-radius:8px;padding:10px 18px;text-align:center;min-width:110px}
+.hs-val{font-size:22px;font-weight:700;color:#1a1a1a}
+.hs-lbl{font-size:11px;color:#888;margin-top:2px}
+.history-scroll{flex:1;overflow-y:auto;padding:0}
+/* daily groups */
+.day-group{border-bottom:1px solid #f0f0f0}
+.day-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8f8f8;border-bottom:1px solid #e8e8e8;cursor:pointer;user-select:none}
+.day-header:hover{background:#f0f0f0}
+.day-title{font-size:13px;font-weight:600;color:#1a1a1a}
+.day-count{font-size:12px;color:#666}
+.day-badges{display:flex;gap:6px}
+.day-rows{overflow:hidden}
+.hist-row{display:grid;grid-template-columns:90px 80px 1fr 160px 130px 100px;gap:8px;padding:9px 16px;border-bottom:1px solid #f5f5f5;align-items:center;font-size:12px}
+.hist-row:hover{background:#fafafa}
+.hist-row:last-child{border-bottom:none}
+.hist-head{display:grid;grid-template-columns:90px 80px 1fr 160px 130px 100px;gap:8px;padding:8px 16px;background:#f0f4ff;border-bottom:1px solid #dde4f0;font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.3px;flex-shrink:0}
+.hist-time{color:#888}
+.hist-subj{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#1a1a1a}
+.hist-tpl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#5b21b6;font-size:11px}
+.hist-uni{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#555}
+/* chart */
+.chart-wrap{padding:16px;border-bottom:1px solid #e0e0e0;background:white;flex-shrink:0}
+.chart-title{font-size:12px;font-weight:600;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.3px}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.bar{background:#0070d2;border-radius:3px 3px 0 0;width:100%;min-height:2px;transition:height 0.3s}
+.bar-label{font-size:10px;color:#888;white-space:nowrap}
+.bar-val{font-size:10px;color:#0070d2;font-weight:600}
+.no-history{color:#aaa;font-size:13px;text-align:center;padding:60px 20px;line-height:1.7}
+.toast{position:fixed;bottom:20px;right:20px;background:#6d28d9;color:white;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;display:none;z-index:999}
+</style>
+</head>
+<body>
+<div class="sf-top">
+  <div class="sf-logo">e-SHE</div>
+  <span class="sf-title">System Support — AI Auto-Reply Demo</span>
+  <div class="sf-badge">AI Flow Active</div>
+</div>
+<div class="tab-bar">
+  <div class="tab active" id="tab-cases" onclick="showPage('cases')">Cases</div>
+  <div class="tab" id="tab-shell" onclick="showPage('cases');switchTab('shell')">Shell Requests</div>
+  <div class="tab" id="tab-general" onclick="showPage('cases');switchTab('general')">General Queue</div>
+  <div class="tab" id="tab-history" onclick="showPage('history')">📊 History &amp; Analytics</div>
+</div>
+
+<!-- CASES PAGE -->
+<div class="page active cases-page" id="page-cases" style="grid-template-columns:300px 1fr 1fr;display:none">
+<div class="col" style="width:300px;flex-shrink:0">
+  <div class="col-head">Student Portal — Submit Case</div>
+  <div class="form-body">
+    <div class="portal-note">Simulates a student submitting from the portal. The system reads their message, picks the exact matching template, and sends it automatically.</div>
+    <div class="fg"><label>Queue</label>
+      <select id="inp-queue" onchange="updateFormFields()">
+        <option value="general">General Queue</option>
+        <option value="shell">Shell Requests</option>
+      </select>
+    </div>
+    <div class="shell-fields" id="shell-fields">
+      <div class="fg"><label>Request Type</label>
+        <select id="inp-shell-type">
+          <option value="course-shell">Course Shell Request</option>
+          <option value="library-shell">Library Shell Request</option>
+        </select>
+      </div>
+      <div class="fg"><label>Course Code</label><input id="inp-code" placeholder="e.g. OEX101"/></div>
+      <div class="fg"><label>Course Title</label><input id="inp-title" placeholder="e.g. How to build in open-edx"/></div>
+    </div>
+    <div class="general-fields show" id="general-fields">
+      <div class="fg"><label>Student Message</label><textarea id="inp-msg" placeholder="Student types their issue in their own words..."></textarea></div>
+    </div>
+    <div class="fg"><label>Student Name</label><input id="inp-name" placeholder="e.g. Dereje Tolera Geleta"/></div>
+    <div class="fg"><label>University</label><input id="inp-uni" placeholder="e.g. Wollega University"/></div>
+    <div class="fg"><label>eSHE Login Email</label><input id="inp-email" type="email" placeholder="user@university.edu.et"/></div>
+    <div class="fg">
+      <label>Try a sample query:</label>
+      <div class="samples">
+        <span class="samp" onclick="fill('platform')">Platform outage</span>
+        <span class="samp" onclick="fill('login')">Can't login</span>
+        <span class="samp" onclick="fill('cert-ss')">SS cert missing</span>
+        <span class="samp" onclick="fill('cert-mc')">MC cert delay</span>
+        <span class="samp" onclick="fill('quiz')">Quiz reset</span>
+        <span class="samp" onclick="fill('completion')">Completion 100%</span>
+        <span class="samp" onclick="fill('ora')">ORA error</span>
+        <span class="samp" onclick="fill('portal-error')">Portal error</span>
+        <span class="samp" onclick="fill('name-change')">Name change</span>
+        <span class="samp" onclick="fill('no-record')">No record found</span>
+        <span class="samp" onclick="fill('shell-course')">Course shell</span>
+        <span class="samp" onclick="fill('shell-library')">Library shell</span>
+        <span class="samp" onclick="fill('mc-cert-pickup')">MC cert pickup</span>
+        <span class="samp" onclick="fill('blueprint')">Blueprint created</span>
+        <span class="samp" onclick="fill('unclear')">Vague message</span>
+      </div>
+    </div>
+    <button class="btn-submit" onclick="submitCase()">Submit Case → Auto-Reply</button>
+  </div>
+</div>
+<div class="col" style="flex:1">
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="cnt-total">0</div><div class="stat-lbl">Total</div></div>
+    <div class="stat"><div class="stat-val" id="cnt-shell" style="color:#166534">0</div><div class="stat-lbl">Shell</div></div>
+    <div class="stat"><div class="stat-val" id="cnt-general" style="color:#92400e">0</div><div class="stat-lbl">General</div></div>
+  </div>
+  <div class="queue-tabs">
+    <div class="qt active" id="qt-all" onclick="switchFilter('all')">All</div>
+    <div class="qt" id="qt-shell" onclick="switchFilter('shell')">Shell</div>
+    <div class="qt" id="qt-general" onclick="switchFilter('general')">General</div>
+  </div>
+  <div class="case-list" id="case-list"><div class="empty-state">No cases yet.<br>Submit one or try a sample query.</div></div>
+</div>
+<div class="col" style="flex:1">
+  <div class="col-head">Case Detail &amp; Auto-Email</div>
+  <div class="detail-body" id="detail-pane"><div class="empty-state">Select a case to see the template matched and email sent to the student.</div></div>
+</div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="page" id="page-history" style="flex-direction:column">
+  <div class="history-toolbar">
+    <label>From:</label>
+    <input type="date" id="filter-from"/>
+    <label>To:</label>
+    <input type="date" id="filter-to"/>
+    <label>Queue:</label>
+    <select id="filter-queue">
+      <option value="all">All Queues</option>
+      <option value="general">General Queue</option>
+      <option value="shell">Shell Requests</option>
+    </select>
+    <label>Template:</label>
+    <select id="filter-tpl">
+      <option value="all">All Templates</option>
+    </select>
+    <button class="btn-filter" onclick="applyFilter()">Apply Filter</button>
+    <button class="btn-clear" onclick="clearFilter()">Clear</button>
+  </div>
+  <div class="history-summary" id="history-summary"></div>
+  <div class="chart-wrap" id="chart-wrap" style="display:none">
+    <div class="chart-title">Cases per day</div>
+    <div class="bar-chart" id="bar-chart"></div>
+  </div>
+  <div class="hist-head" id="hist-head" style="display:none">
+    <div>Case #</div><div>Time</div><div>Subject</div><div>Template Used</div><div>University</div><div>Queue</div>
+  </div>
+  <div class="history-scroll" id="history-scroll">
+    <div class="no-history">No cases yet.<br>Submit cases from the Cases tab to see history here.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SAMPLES={
+  platform:{queue:'general',name:'Dereje Tolera Geleta',uni:'Wollega University',email:'derejeto@wollegauniversity.edu.et',msg:"Hello Dear e-she support team. I could not pursue my e_she program because the page doesn't work. Regards"},
+  login:{queue:'general',name:'Tigist Alemu',uni:'Addis Ababa University',email:'tigist.alemu@aau.edu.et',msg:'I am trying to login to eSHE but it keeps saying invalid credentials. I tried resetting my password but still cannot access.'},
+  'cert-ss':{queue:'general',name:'Yonas Nigatu',uni:'Woldia University',email:'yonas.nigatu@wldu.edu.et',msg:'Please give me additional chance for exercise. I did all the quizzes but did not receive my certificate for Success Suite SS 1.'},
+  'cert-mc':{queue:'general',name:'Negeso Gobena',uni:'Hawassa University',email:'negesog@hu.edu.et',msg:'Even though my point is 96% I did not get certificate yet. I completed the Master Class course but certificate is not issued.'},
+  quiz:{queue:'general',name:'Hana Bekele',uni:'Jimma University',email:'hana.bekele@ju.edu.et',msg:'I failed my quiz in SS 3 and used all my attempts. Can you please reset my quiz so I can try again?'},
+  completion:{queue:'general',name:'Abebe Girma',uni:'Bahir Dar University',email:'abebe.g@bdu.edu.et',msg:'My course completion chart is not showing 100% even though I completed all the assignments.'},
+  ora:{queue:'general',name:'Sara Tesfaye',uni:'Jimma University',email:'sara.t@ju.edu.et',msg:'I am having trouble submitting my Open Response Assessment. It shows an error.'},
+  'portal-error':{queue:'general',name:'Feven Hailu',uni:'Arba Minch University',email:'feven.h@amu.edu.et',msg:'I am getting an error message Failed to load courses when I open my portal.'},
+  'name-change':{queue:'general',name:'Almaz Berhe',uni:'Mekelle University',email:'almaz.berhe@mu.edu.et',msg:'I want to change my name on my eSHE record and certificate. My name was spelled incorrectly.'},
+  'no-record':{queue:'general',name:'Unknown Student',uni:'Addis Ababa University',email:'student@aau.edu.et',msg:'I am trying to register on eSHE but the system says it cannot find my record.'},
+  'shell-course':{queue:'shell',type:'course-shell',name:'Almaz Berhe weldemical',uni:'Mekelle University',email:'almaz.berhe@mu.edu.et',code:'OEX101',title:'How to build in open-edx studio'},
+  'shell-library':{queue:'shell',type:'library-shell',name:'Hashim Ware Hirbo',uni:'Jimma University',email:'ware.hashim@ju.edu.et',code:'LIB201',title:'Introduction to Digital Resources'},
+  'mc-cert-pickup':{queue:'general',name:'Tadesse Bekele',uni:'Hawassa University',email:'tadesse.b@hu.edu.et',msg:'I passed Master Class with 85% but I do not know where to find my certificate and badge from CredID.'},
+  blueprint:{queue:'general',name:'Instructor Lemma',uni:'Addis Ababa University',email:'lemma@aau.edu.et',msg:'My development shell has been converted to a blueprint. What should I do next?'},
+  unclear:{queue:'general',name:'Feven Hailu',uni:'Arsi University',email:'feven.h@arsi.edu.et',msg:'I have a problem please help me'}
+};
+
+const TEMPLATES={
+  platform_outage:{name:'Platform Outage',keywords:['not working','page not work','outage','cannot access','could not pursue','doesnt work','platform down','site down','portal down','e_she program','page doesnt','not loading','offline','cant access'],body:`Hello {name},\n\nWe currently have an unexpected outage on the eSHE platform.\nOur technical team is actively working to fix it as quickly as possible. Kindly check back later.\n\nFor real-time updates, check the eSHE Public Help Center:\nhttps://eshemoeasu.my.site.com/help/s/\n\nThank you for your patience and understanding.\n\nWarmest Regards,\neSHE Support.`},
+  login_trouble:{name:'Login Troubleshooting',keywords:['cannot login','cant login','invalid credentials','login problem','trouble signing','cannot log in','password','log in issue','sign in','cannot sign','trouble login','logging in'],body:`Dear {name},\n\nYou may have problems logging into e-SHE. Let's fix this.\n\nAlready registered? Try these steps:\n1. Close your browser completely and reopen\n2. Try another browser (Chrome or Firefox)\n3. Check your internet connection\n4. Try private/incognito mode\n5. Clear browser cache and cookies\n\nIf you see a 403 error:\nhttps://eshemoeasu.my.site.com/help/s/article/Google-error-message-that-says-403-That-is-an-error\n\nIf you see "Sorry, but we're having trouble signing you in":\nhttps://eshemoeasu.my.site.com/help/s/article/Error-message-says-Sorry-but-we-are-having-trouble-signing-you-in\n\nReply if you still cannot log in.\n\nThank you,\ne-SHE Support`},
+  cert_ss:{name:'SS Quiz Reset Survey',keywords:['certificate','ss 1','ss 2','ss 3','ss 4','ss 5','ss 6','ss 7','success suite','quiz reset','additional chance','no certificate','not receive','did not receive','didnt receive','excel','outlook','teams','powerpoint','additional skills'],body:`Dear {name},\n\nIf you have not received your certificate for Success Suite (SS 1-7) or an Additional Skills Course:\n\n1. Go back to the course. Use all 3 tries for each quiz/activity.\n2. If you still do not get a certificate, fill out this survey:\nhttps://asu.co1.qualtrics.com/jfe/form/SV_1KZocZTnJ1qa4qG\n\n   * Answer all survey questions\n   * Enter your eSHE login email (format: yourname@university.edu.et)\n   * Submit the survey\n\nWe will reset your quiz after we get your survey.\n\nTip: Check the Progress page — if it says "You're currently passing this course," click "View my Certificate."\n\nBest,\ne-SHE Support`},
+  cert_mc_waiting:{name:'MC Certificate — 2 Weeks',keywords:['master class certificate','mc certificate','did not get certificate','not issued','96%','passed master class','finished master class','completed master class','certificate not','waiting for certificate','certificate delay'],body:`Greetings {name},\n\nWe are happy to know you finished the Master Class! 🎉\n\nCertificates are usually issued about two weeks after the final course deadline.\nThis gives instructors enough time to check and grade all work.\n\nYour instructor will send you a message when your certificate is ready.\n\nMore info:\nhttps://eshemoeasu.my.site.com/help/s/article/Will-I-be-issued-a-certificate-when-I-complete-Master-Class\n\nThank you,\nMaster Class Facilitation Team`},
+  cert_mc_pickup:{name:'MC Certificate Pickup (CredID)',keywords:['pick up certificate','pickup certificate','credid','badge','where is my certificate','how to get certificate','find certificate','find badge','collect certificate','download certificate'],body:`Greetings {name},\n\nCongratulations on passing Master Class!\n\nPick up your certificate and badge:\n1. Go to ASU CredID: https://credid.asu.edu/sign-up\n2. Create an account using your e-SHE login email\n\nTips:\n- Video guide: https://www.dropbox.com/scl/fi/1t3pfm561miyv9myhq6jt/CredID-Step-by-Step.mp4?rlkey=7ad2c6ivakaves3ybm4b0c4o9&st=btdycynn&dl=0\n- Step-by-step guide: https://docs.google.com/document/d/e/2PACX-1vRfFKXNg9F8ofQjJ50qbmhLfAp5ttr70dM4OCR9zW5gEYhzqQ9NywQ8fSHmRd6emNIcwEyPRdDH2lZ_/pub\n\nIMPORTANT: Use your e-SHE login email when creating the CredID account.\n\nThank you,\ne-SHE Training Team`},
+  completion_chart:{name:'Course Completion Not 100%',keywords:['completion','100%','not 100','completion chart','not showing 100','course completion','green checkmark','progress','completed all','why not complete'],body:`Greetings {name},\n\nYour Course Completion chart may not show 100% because:\n- Pages without quizzes won't always be marked complete\n- You may have completed a page faster than the system expected\n- Optional pages may be included in the count\n\nGood news: You don't need 100% completion to pass or get a certificate. Your grade is what matters.\n\nTo check if you passed: go to the Progress page. If "Your current grade" is higher than the "Passing grade," you have passed!\n\nMore info:\nhttps://eshemoeasu.my.site.com/help/s/article/Why-doesn-t-the-Course-Completion-chart-show-100\n\nWarmest regards,\neSHE Support`},
+  ora_error:{name:'ORA Submission Error',keywords:['open response','ora','assessment error','submit assignment','trouble submitting','cant submit','assignment problem','submission error','submitting','wont submit','assignment not submitting'],body:`Greetings {name},\n\nI understand you are having trouble submitting an Open Response Assessment (ORA).\n\nThe most common cause is non-standard characters when copy-pasting from Word or Google Docs.\n\nTwo fixes:\n1. Type your response directly into the ORA (do not copy-paste)\n2. If you must paste: first paste into Notepad (set to Plain Text), then copy from there into the ORA\n\nFree tool to clean text:\nhttps://www.text-utils.com/remove-special-characters\n\nFull guide:\nhttps://eshemoeasu.my.site.com/help/s/article/Open-Response-Assessments-Common-Problems\n\nReply if you need further help.\n\nWarmest regards,\neSHE Support Team`},
+  portal_courses_error:{name:'Portal Failed to Load Courses',keywords:['failed to load','courses not showing','no courses','courses missing','not seeing courses','error message','500 error','network error','courses disappeared','portal shows error','courses not loading'],body:`Greetings {name},\n\nI understand you are not seeing any courses and getting an error message.\n\nPlease try these fixes one at a time:\n1. Wait a minute and refresh your browser\n2. Close and reopen your browser completely\n3. Try Chrome or Firefox\n4. Check your internet connection\n5. If using a VPN, try turning it off\n6. Try Private / Incognito mode\n7. Clear your browser cache and cookies\n\nMore tips:\nhttps://eshemoeasu.my.site.com/help/s/article/What-if-I-have-a-technical-problem-viewing-a-page\n\nIf none of these work, please reply and we will investigate.\n\nBest wishes,\neSHE Support`},
+  name_change:{name:'Name Change Request',keywords:['name change','change my name','wrong name','incorrect name','name spelled','update name','name on certificate','name correction','fix my name'],body:`Greetings {name},\n\nThank you for contacting us. We have received your name change request.\n\nYour case has been assigned to your university support team. They will make the name change and contact you if needed.\n\nOnce updated, go to your e-SHE Portal and open your course to download your certificate with the correct name.\n\nBest regards,\neSHE Support Team`},
+  no_record:{name:'No Record Found',keywords:['cannot find','record not found','not in system','cant register','cannot register','no record','not found in eshe','registration failed','not registered','my name not found'],body:`Hello {name},\n\nThank you for your message. We cannot find your name or email in eSHE.\n\nYour university has not added you yet, so you cannot register at this time.\n\nIf you did not get an email from eSHE with the subject "Complete Your Registration," please wait for your university to send it.\n\nFor questions about enrollment, please contact your university's e-Learning Coordinator.\n\nBest regards,\neSHE Support Team`},
+  blueprint_next:{name:'Blueprint Created — Next Steps',keywords:['blueprint','dev shell converted','what to do next','after blueprint','create course offering','blueprint what next','development shell blueprint'],body:`Greetings {name},\n\nYour development shell has been successfully converted into a blueprint course.\n\nWhat to do next:\n1. In eLIS, find your blueprint under "Create a Course Offering from Blueprint"\n2. Create your course offering, then add instructors and students\n\n⚠️ Reminder: Updates to the blueprint only affect future course offerings, not existing ones.\n\nMore info:\nhttps://eshemoeasu.my.site.com/help/s/article/My-Course-Is-Now-a-Blueprint-What-Do-I-Do-Next\n\nWarm regards,\neSHE Support`},
+  shell_course:{name:'Course Shell Created',keywords:['course shell','dev shell','course request','create course','course development','new course'],body:`Prof. {name},\n\nCongratulations! Your requested new course development shell has been created for you.\n\nYou can access the course from your eSHE learning portal. See your Instructor Tab.\n\nHaving trouble finding your Instructor Tab?\nhttps://bit.ly/eSHEPortalWalkthrough\n\nGetting Ready to Offer Your Course:\nhttps://eshemoeasu.my.site.com/help/s/article/Getting-Ready-to-Offer-Your-Course\n\nBest,\neSHE Support`},
+  shell_library:{name:'Library Shell Created',keywords:['library shell','library request','create library','new library','library development'],body:`Prof. {name},\n\nCongratulations! Your requested new LIBRARY has been created for you.\n\nYou can access the library from your eSHE learning portal. See your Instructor Tab.\n\nhttps://bit.ly/eSHEPortalWalkthrough\n\nGetting Ready to Offer Your Course:\nhttps://eshemoeasu.my.site.com/help/s/article/Getting-Ready-to-Offer-Your-Course\n\nBest,\neSHE Support`},
+  need_more_info:{name:'Need More Information',keywords:[],body:`Hi {name},\n\nThank you for your message. We can see your eSHE account.\n\nTo help you, we need more information.\nReply and tell us what you need.\n\nIf you can, please send a screenshot and the webpage link (URL).\n\nBest,\neSHE Support`}
+};
+
+function matchTemplate(msg,queue,shellType){
+  if(queue==='shell') return shellType==='library-shell'?TEMPLATES.shell_library:TEMPLATES.shell_course;
+  const lower=msg.toLowerCase();
+  let best=null,bestScore=0;
+  for(const [key,tpl] of Object.entries(TEMPLATES)){
+    if(key==='need_more_info') continue;
+    let score=0;
+    for(const kw of tpl.keywords){if(lower.includes(kw)) score++;}
+    if(score>bestScore){bestScore=score;best=tpl;}
+  }
+  return bestScore>0?best:TEMPLATES.need_more_info;
+}
+
+let cases=[],selected=null,ctr=56800,currentFilter='all',currentPage='cases';
+
+// seed some historical cases across past days for demo
+function seedHistory(){
+  const now=new Date();
+  const names=['Dereje Tolera','Yonas Nigatu','Negeso Gobena','Tigist Alemu','Hana Bekele','Almaz Berhe','Samuel Tadesse','Feven Hailu','Abebe Girma','Sara Tesfaye'];
+  const unis=['Wollega University','Woldia University','Hawassa University','Jimma University','Mekelle University','Addis Ababa University','Bahir Dar University','Arba Minch University'];
+  const msgs=['page not working','certificate not received for SS 1','cannot login to eshe','quiz reset request SS 3','master class certificate not issued','failed to load courses','open response assessment error','name change request','course completion not 100 percent','could not find my record in eshe'];
+  let id=56700;
+  for(let d=6;d>=0;d--){
+    const count=Math.floor(Math.random()*6)+2;
+    for(let i=0;i<count;i++){
+      const dt=new Date(now);
+      dt.setDate(now.getDate()-d);
+      dt.setHours(8+Math.floor(Math.random()*10),Math.floor(Math.random()*60));
+      const msg=msgs[Math.floor(Math.random()*msgs.length)];
+      const matched=matchTemplate(msg,'general','');
+      const nm=names[Math.floor(Math.random()*names.length)];
+      cases.push({
+        id:`000${++id}`,name:nm,
+        email:nm.split(' ')[0].toLowerCase()+'@university.edu.et',
+        uni:unis[Math.floor(Math.random()*unis.length)],
+        subj:msg,msg,queue:'general',code:'',title:'',
+        time:dt.toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'numeric'})+', '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}),
+        createdAt:dt.getTime(),status:'AI Replied',
+        emailBody:matched.body.replace(/\{name\}/g,nm),
+        emailSubject:'Re: '+msg,
+        templateUsed:matched.name
+      });
+    }
+  }
+  cases.sort((a,b)=>b.createdAt-a.createdAt);
+}
+seedHistory();
+
+function showPage(p){
+  currentPage=p;
+  document.getElementById('page-cases').style.display=p==='cases'?'grid':'none';
+  document.getElementById('page-history').style.display=p==='history'?'flex':'none';
+  document.getElementById('tab-cases').classList.toggle('active',p==='cases');
+  document.getElementById('tab-history').classList.toggle('active',p==='history');
+  if(p==='history') renderHistory();
+  renderList(); updateStats();
+}
+// init
+document.getElementById('page-cases').style.display='grid';
+document.getElementById('page-history').style.display='none';
+
+// populate template filter
+function populateTplFilter(){
+  const sel=document.getElementById('filter-tpl');
+  const names=[...new Set(Object.values(TEMPLATES).map(t=>t.name))];
+  names.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
+}
+populateTplFilter();
+
+// set default dates
+function initDates(){
+  const now=new Date();
+  const from=new Date(now); from.setDate(now.getDate()-6);
+  document.getElementById('filter-from').value=from.toISOString().split('T')[0];
+  document.getElementById('filter-to').value=now.toISOString().split('T')[0];
+}
+initDates();
+
+function updateFormFields(){
+  const q=document.getElementById('inp-queue').value;
+  document.getElementById('shell-fields').className='shell-fields'+(q==='shell'?' show':'');
+  document.getElementById('general-fields').className='general-fields'+(q==='general'?' show':'');
+}
+
+function fill(k){
+  const s=SAMPLES[k];
+  document.getElementById('inp-queue').value=s.queue;
+  updateFormFields();
+  if(s.queue==='shell'){
+    document.getElementById('inp-shell-type').value=s.type||'course-shell';
+    document.getElementById('inp-code').value=s.code||'';
+    document.getElementById('inp-title').value=s.title||'';
+  } else {
+    document.getElementById('inp-msg').value=s.msg||'';
+  }
+  document.getElementById('inp-name').value=s.name;
+  document.getElementById('inp-uni').value=s.uni;
+  document.getElementById('inp-email').value=s.email;
+}
+
+function switchTab(t){
+  ['all','shell','general'].forEach(x=>document.getElementById('tab-'+x)?.classList.toggle('active',x===t));
+  switchFilter(t);
+}
+function switchFilter(f){
+  currentFilter=f;
+  ['all','shell','general'].forEach(x=>document.getElementById('qt-'+x)?.classList.toggle('active',x===f));
+  renderList();
+}
+
+function submitCase(){
+  const queue=document.getElementById('inp-queue').value;
+  const name=document.getElementById('inp-name').value.trim();
+  const email=document.getElementById('inp-email').value.trim();
+  const uni=document.getElementById('inp-uni').value.trim()||'Unknown University';
+  if(!name||!email){alert('Please fill in name and email.');return;}
+  let subj='',msg='',code='',title='',shellType='';
+  if(queue==='shell'){
+    shellType=document.getElementById('inp-shell-type').value;
+    code=document.getElementById('inp-code').value.trim()||'N/A';
+    title=document.getElementById('inp-title').value.trim()||'N/A';
+    subj=`*${shellType==='course-shell'?'CREATE COURSE REQUEST':'CREATE LIBRARY REQUEST'}* submitted by ${name}`;
+    msg=`Shell request. Course code: ${code}. Course title: ${title}.`;
+  } else {
+    msg=document.getElementById('inp-msg').value.trim();
+    if(!msg){alert('Please enter the student message.');return;}
+    subj=msg.length>60?msg.substring(0,60)+'...':msg;
+  }
+  ctr++;
+  const now=new Date();
+  const t=now.toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'numeric'})+', '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  const matched=matchTemplate(msg,queue,shellType);
+  const body=matched.body.replace(/\{name\}/g,name);
+  const c={id:`000${ctr}`,name,email,uni,subj,msg,time:t,createdAt:Date.now(),queue,code,title,status:'AI Replied',emailBody:body,emailSubject:`Re: ${subj}`,templateUsed:matched.name};
+  cases.unshift(c);
+  renderList(); updateStats(); selectCase(c.id);
+  showToast('Template matched & email sent to '+email);
+  ['inp-name','inp-email','inp-uni','inp-code','inp-title','inp-msg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function renderList(){
+  const el=document.getElementById('case-list');
+  if(!el) return;
+  const filtered=currentFilter==='all'?cases:cases.filter(c=>c.queue===currentFilter);
+  if(!filtered.length){el.innerHTML='<div class="empty-state">No cases in this queue yet.</div>';return;}
+  el.innerHTML=filtered.map(c=>{
+    const qb=c.queue==='shell'?'<span class="badge b-shell">Shell</span>':'<span class="badge b-general">General</span>';
+    return `<div class="cc ${selected===c.id?'sel':''}" onclick="selectCase('${c.id}')">
+      <div class="cc-top"><span class="cc-num">${c.id}</span><div style="display:flex;gap:4px">${qb}<span class="badge b-ai">AI sent</span></div></div>
+      <div class="cc-subj">${c.subj}</div>
+      <div class="cc-meta"><span>${c.uni}</span><span>${c.time}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function selectCase(id){
+  selected=id;
+  const c=cases.find(x=>x.id===id);
+  if(!c)return;
+  renderList();
+  const qb=c.queue==='shell'?'<span class="badge b-shell">Shell Request</span>':'<span class="badge b-general">General Queue</span>';
+  document.getElementById('detail-pane').innerHTML=`
+    <div class="d-title">${c.subj}</div>
+    <div class="d-row"><span class="d-lbl">Case #</span><span class="d-val">${c.id}</span></div>
+    <div class="d-row"><span class="d-lbl">Queue</span><span class="d-val">${qb}</span></div>
+    <div class="d-row"><span class="d-lbl">Contact</span><span class="d-val">${c.name}</span></div>
+    <div class="d-row"><span class="d-lbl">University</span><span class="d-val">${c.uni}</span></div>
+    <div class="d-row"><span class="d-lbl">Email</span><span class="d-val">${c.email}</span></div>
+    <div class="d-row"><span class="d-lbl">Message</span><span class="d-val" style="font-style:italic">"${c.msg}"</span></div>
+    ${c.queue==='shell'?`<div class="d-row"><span class="d-lbl">Course</span><span class="d-val">${c.code} — ${c.title}</span></div>`:''}
+    <div class="d-row"><span class="d-lbl">Opened</span><span class="d-val">${c.time}</span></div>
+    <div class="email-box">
+      <div class="email-field">To: <span>${c.email}</span></div>
+      <div class="email-field">From: <span>eSHE Support &lt;eshe.support@asu.edu&gt;</span></div>
+      <div class="email-field">Subject: <span>${c.emailSubject}</span></div>
+      <div class="email-body">${c.emailBody}</div>
+    </div>`;
+}
+
+function updateStats(){
+  document.getElementById('cnt-total').textContent=cases.length;
+  document.getElementById('cnt-shell').textContent=cases.filter(c=>c.queue==='shell').length;
+  document.getElementById('cnt-general').textContent=cases.filter(c=>c.queue==='general').length;
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────────────
+function getFilteredHistory(){
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  const qf=document.getElementById('filter-queue').value;
+  const tf=document.getElementById('filter-tpl').value;
+  return cases.filter(c=>{
+    const d=new Date(c.createdAt);
+    const ds=d.toISOString().split('T')[0];
+    if(from && ds<from) return false;
+    if(to && ds>to) return false;
+    if(qf!=='all' && c.queue!==qf) return false;
+    if(tf!=='all' && c.templateUsed!==tf) return false;
+    return true;
+  });
+}
+
+function applyFilter(){ renderHistory(); }
+function clearFilter(){
+  initDates();
+  document.getElementById('filter-queue').value='all';
+  document.getElementById('filter-tpl').value='all';
+  renderHistory();
+}
+
+function renderHistory(){
+  const filtered=getFilteredHistory();
+  const scroll=document.getElementById('history-scroll');
+  const summary=document.getElementById('history-summary');
+  const head=document.getElementById('hist-head');
+  const chartWrap=document.getElementById('chart-wrap');
+
+  if(!filtered.length){
+    summary.innerHTML='';
+    head.style.display='none';
+    chartWrap.style.display='none';
+    scroll.innerHTML='<div class="no-history">No cases found for the selected filters.</div>';
+    return;
+  }
+
+  // summary cards
+  const totalSolved=filtered.length;
+  const shellCount=filtered.filter(c=>c.queue==='shell').length;
+  const generalCount=filtered.filter(c=>c.queue==='general').length;
+  const tplCounts={};
+  filtered.forEach(c=>{tplCounts[c.templateUsed]=(tplCounts[c.templateUsed]||0)+1;});
+  const topTpl=Object.entries(tplCounts).sort((a,b)=>b[1]-a[1])[0];
+  const days=[...new Set(filtered.map(c=>new Date(c.createdAt).toISOString().split('T')[0]))];
+  const avgPerDay=days.length?Math.round(totalSolved/days.length):0;
+
+  summary.innerHTML=`
+    <div class="hs-card"><div class="hs-val">${totalSolved}</div><div class="hs-lbl">Cases Solved</div></div>
+    <div class="hs-card"><div class="hs-val" style="color:#92400e">${generalCount}</div><div class="hs-lbl">General Queue</div></div>
+    <div class="hs-card"><div class="hs-val" style="color:#166534">${shellCount}</div><div class="hs-lbl">Shell Requests</div></div>
+    <div class="hs-card"><div class="hs-val" style="color:#0070d2">${avgPerDay}</div><div class="hs-lbl">Avg / Day</div></div>
+    ${topTpl?`<div class="hs-card" style="min-width:160px"><div class="hs-val" style="font-size:14px;color:#6d28d9">${topTpl[1]}</div><div class="hs-lbl">Top: ${topTpl[0]}</div></div>`:''}`;
+
+  // bar chart — cases per day
+  const dayCounts={};
+  filtered.forEach(c=>{
+    const d=new Date(c.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    dayCounts[d]=(dayCounts[d]||0)+1;
+  });
+  const dayKeys=Object.keys(dayCounts).slice(-10);
+  const maxVal=Math.max(...dayKeys.map(k=>dayCounts[k]),1);
+  chartWrap.style.display='block';
+  document.getElementById('bar-chart').innerHTML=dayKeys.map(d=>`
+    <div class="bar-col">
+      <div class="bar-val">${dayCounts[d]}</div>
+      <div class="bar" style="height:${Math.round((dayCounts[d]/maxVal)*65)+5}px"></div>
+      <div class="bar-label">${d}</div>
+    </div>`).join('');
+
+  // group by day
+  const byDay={};
+  filtered.forEach(c=>{
+    const dk=new Date(c.createdAt).toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    if(!byDay[dk]) byDay[dk]=[];
+    byDay[dk].push(c);
+  });
+
+  head.style.display='grid';
+  scroll.innerHTML=Object.entries(byDay).map(([day,dayCases])=>`
+    <div class="day-group">
+      <div class="day-header">
+        <span class="day-title">${day}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="day-count">${dayCases.length} case${dayCases.length!==1?'s':''} solved</span>
+          <span class="badge b-general">${dayCases.filter(c=>c.queue==='general').length} general</span>
+          <span class="badge b-shell">${dayCases.filter(c=>c.queue==='shell').length} shell</span>
+        </div>
+      </div>
+      <div class="day-rows">
+        ${dayCases.map(c=>`
+          <div class="hist-row">
+            <span style="color:#0070d2;font-weight:600">${c.id}</span>
+            <span class="hist-time">${new Date(c.createdAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</span>
+            <span class="hist-subj" title="${c.subj}">${c.subj}</span>
+            <span class="hist-tpl" title="${c.templateUsed}">${c.templateUsed}</span>
+            <span class="hist-uni" title="${c.uni}">${c.uni}</span>
+            <span>${c.queue==='shell'?'<span class="badge b-shell">Shell</span>':'<span class="badge b-general">General</span>'}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>{t.style.display='none';},3500);}
+
+// init render
+renderList(); updateStats();
+</script>
+</body>
+</html>
